@@ -7,6 +7,7 @@ use {
     git2::Repository,
     regex::Regex,
     tokio::process::Command,
+    std::time::Instant
 };
 
 pub struct Info {
@@ -268,6 +269,8 @@ impl Info {
     }
 
     async fn get_git_history(dir: &str, no_merges: bool) -> Vec<String> {
+        let now = Instant::now();
+        //println!("start get_git_history");
         let mut args = vec!["-C", dir, "log"];
         if no_merges {
             args.push("--no-merges");
@@ -278,10 +281,15 @@ impl Info {
         let output = Command::new("git").args(args).output().await.expect("Failed to execute git.");
 
         let output = String::from_utf8_lossy(&output.stdout);
+        let new_now = Instant::now();
+        println!("get_git_history --> {:?}", new_now.duration_since(now));
+        //println!("end get_git_history");
         output.lines().map(|x| x.to_string()).collect::<Vec<_>>()
     }
 
     async fn get_number_of_tags_branches(dir: &str) -> (usize, usize) {
+        //println!("start get_number_of_tags_branches");
+        let now = Instant::now();
         let tags = {
             let output = Command::new("git")
                 .args(vec!["-C", dir, "tag"])
@@ -309,7 +317,9 @@ impl Info {
                 0
             }
         };
-
+        //println!("end get_number_of_tags_branches");
+        let new_now = Instant::now();
+        println!("get_number_of_tags_branches --> {:?}", new_now.duration_since(now));
         (tags, branches)
     }
 
@@ -402,6 +412,8 @@ impl Info {
     }
 
     async fn get_git_version_and_username(dir: &str) -> (String, String) {
+        let now = Instant::now();
+        //println!("start get_git_version_and_username");
         let version =
             Command::new("git").arg("--version").output().await.expect("Failed to execute git.");
         let version = String::from_utf8_lossy(&version.stdout).replace('\n', "");
@@ -416,10 +428,15 @@ impl Info {
             .await
             .expect("Failed to execute git.");
         let username = String::from_utf8_lossy(&username.stdout).replace('\n', "");
+        let new_now = Instant::now();
+        println!("get_git_version_and_username --> {:?}", new_now.duration_since(now));
+        //println!("end get_git_version_and_username");
         (version, username)
     }
 
     async fn get_version(dir: &str) -> Result<String> {
+        let now = Instant::now();
+        //println!("start get_version");
         let output = Command::new("git")
             .arg("-C")
             .arg(dir)
@@ -431,7 +448,9 @@ impl Info {
             .expect("Failed to execute git.");
 
         let output = String::from_utf8_lossy(&output.stdout);
-
+        let new_now = Instant::now();
+        println!("get_version --> {:?}", new_now.duration_since(now));
+        //println!("end get_version");
         if output == "" {
             Ok("??".into())
         } else {
@@ -445,6 +464,8 @@ impl Info {
     }
 
     async fn get_pending_changes(dir: &str) -> Result<String> {
+        let now = Instant::now();
+        //println!("start get_pending_changes");
         let output = Command::new("git")
             .arg("-C")
             .arg(dir)
@@ -488,12 +509,17 @@ impl Info {
             if deleted > 0 {
                 result = format!("{} {}-", result, deleted);
             }
+            let new_now = Instant::now();
+            println!("get_pending_changes --> {:?}", new_now.duration_since(now));
 
+            //println!("end get_pending_changes");
             Ok(result.trim().into())
         }
     }
 
     async fn get_packed_size(dir: &str) -> Result<String> {
+        let now = Instant::now();
+        //println!("start get_packed_size");
         let output = Command::new("git")
             .arg("-C")
             .arg(dir)
@@ -522,6 +548,9 @@ impl Info {
         // To check if command executed successfully or not
         let error = &output.stderr;
 
+        let new_now = Instant::now();
+        println!("get_packed_size --> {:?}", new_now.duration_since(now));
+        //println!("end get_packed_size");
         if error.is_empty() {
             let output = String::from_utf8_lossy(&output.stdout);
 
